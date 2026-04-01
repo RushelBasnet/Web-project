@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HomeRent - Find Your Perfect Rental</title>
+  <meta name="description" content="Browse thousands of rental properties. Houses, apartments, studios and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#" class="logo" onclick="showPage('home')">
+        <span class="logo-icon">🏠</span>
+        <span>HomeRent</span>
+      </a>
+      <div class="nav-links">
+        <a href="#" onclick="showPage('home')">Browse</a>
+        <a href="#" onclick="showPage('home')">Landlords</a>
+        <a href="#" onclick="showPage('home')">About</a>
+      </div>
+      <div class="nav-actions">
+        <button class="btn-outline" onclick="openModal('loginModal')">Log in</button>
+        <button class="btn-primary" onclick="openModal('loginModal')">Sign up</button>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#" onclick="showPage('home'); toggleMobileMenu()">Browse</a>
+      <a href="#" onclick="toggleMobileMenu()">Landlords</a>
+      <a href="#" onclick="toggleMobileMenu()">About</a>
+      <a href="#" onclick="openModal('loginModal'); toggleMobileMenu()">Log in</a>
+      <a href="#" onclick="openModal('loginModal'); toggleMobileMenu()">Sign up</a>
+    </div>
+  </nav>
+
+  <!-- HOME PAGE -->
+  <div id="page-home">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <h1>Find your next home</h1>
+        <p>Search thousands of rental properties across the country</p>
+        <div class="search-bar">
+          <div class="search-field">
+            <label>Location</label>
+            <input type="text" id="heroLocation" placeholder="City, neighborhood, or ZIP" />
+          </div>
+          <div class="search-divider"></div>
+          <div class="search-field">
+            <label>Property Type</label>
+            <select id="heroType">
+              <option value="">Any type</option>
+              <option value="apartment">Apartment</option>
+              <option value="house">House</option>
+              <option value="studio">Studio</option>
+              <option value="condo">Condo</option>
+              <option value="townhouse">Townhouse</option>
+            </select>
+          </div>
+          <div class="search-divider"></div>
+          <div class="search-field">
+            <label>Max Price</label>
+            <select id="heroPrice">
+              <option value="">Any price</option>
+              <option value="1000">$1,000/mo</option>
+              <option value="1500">$1,500/mo</option>
+              <option value="2000">$2,000/mo</option>
+              <option value="2500">$2,500/mo</option>
+              <option value="3000">$3,000/mo</option>
+              <option value="4000">$4,000/mo</option>
+            </select>
+          </div>
+          <button class="search-btn" onclick="doSearch()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Search
+          </button>
+        </div>
+        <div class="hero-tags">
+          <span onclick="quickSearch('New York')">New York</span>
+          <span onclick="quickSearch('Los Angeles')">Los Angeles</span>
+          <span onclick="quickSearch('Chicago')">Chicago</span>
+          <span onclick="quickSearch('Miami')">Miami</span>
+          <span onclick="quickSearch('Austin')">Austin</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="stats-bar">
+      <div class="stats-container">
+        <div class="stat"><span class="stat-num">12,000+</span><span class="stat-label">Active Listings</span></div>
+        <div class="stat-sep"></div>
+        <div class="stat"><span class="stat-num">50+</span><span class="stat-label">Cities Covered</span></div>
+        <div class="stat-sep"></div>
+        <div class="stat"><span class="stat-num">98%</span><span class="stat-label">Satisfaction Rate</span></div>
+        <div class="stat-sep"></div>
+        <div class="stat"><span class="stat-num">24/7</span><span class="stat-label">Customer Support</span></div>
+      </div>
+    </section>
+
+    <!-- FEATURED LISTINGS -->
+    <section class="section">
+      <div class="section-container">
+        <div class="section-header">
+          <div>
+            <h2>Featured Properties</h2>
+            <p>Hand-picked rentals for you</p>
+          </div>
+          <button class="btn-outline" onclick="showPage('listings')">View all listings →</button>
+        </div>
+        <div class="listings-grid" id="featuredGrid"></div>
+      </div>
+    </section>
+
+    <!-- CATEGORIES -->
+    <section class="section section-gray">
+      <div class="section-container">
+        <h2 class="text-center">Browse by type</h2>
+        <p class="text-center subtitle">Find the style of home that suits you</p>
+        <div class="categories-grid">
+          <div class="category-card" onclick="filterByType('apartment')">
+            <div class="cat-icon">🏢</div>
+            <h3>Apartment</h3>
+            <p>Modern city living</p>
+          </div>
+          <div class="category-card" onclick="filterByType('house')">
+            <div class="cat-icon">🏡</div>
+            <h3>House</h3>
+            <p>Space &amp; privacy</p>
+          </div>
+          <div class="category-card" onclick="filterByType('studio')">
+            <div class="cat-icon">🛋️</div>
+            <h3>Studio</h3>
+            <p>Compact &amp; cozy</p>
+          </div>
+          <div class="category-card" onclick="filterByType('condo')">
+            <div class="cat-icon">🏙️</div>
+            <h3>Condo</h3>
+            <p>Premium amenities</p>
+          </div>
+          <div class="category-card" onclick="filterByType('townhouse')">
+            <div class="cat-icon">🏘️</div>
+            <h3>Townhouse</h3>
+            <p>Best of both worlds</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section">
+      <div class="section-container">
+        <h2 class="text-center">How it works</h2>
+        <p class="text-center subtitle">Three simple steps to your new home</p>
+        <div class="steps-grid">
+          <div class="step">
+            <div class="step-num">1</div>
+            <h3>Search</h3>
+            <p>Browse thousands of verified listings filtered to your needs and budget.</p>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <h3>Connect</h3>
+            <p>Message landlords directly and schedule viewings at your convenience.</p>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <h3>Move in</h3>
+            <p>Sign your lease digitally and get the keys to your new home.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA BANNER -->
+    <section class="cta-banner">
+      <div class="cta-container">
+        <h2>Ready to find your place?</h2>
+        <p>Join thousands of happy renters who found their home on HomeRent.</p>
+        <button class="btn-white" onclick="showPage('listings')">Browse All Properties</button>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <div class="logo"><span class="logo-icon">🏠</span><span>HomeRent</span></div>
+          <p>Making renting simple, transparent, and stress-free.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Renters</h4>
+          <a href="#">Browse listings</a>
+          <a href="#">How it works</a>
+          <a href="#">Pricing</a>
+        </div>
+        <div class="footer-links">
+          <h4>Landlords</h4>
+          <a href="#">List your property</a>
+          <a href="#">Landlord tools</a>
+          <a href="#">Tenant screening</a>
+        </div>
+        <div class="footer-links">
+          <h4>Company</h4>
+          <a href="#">About us</a>
+          <a href="#">Blog</a>
+          <a href="#">Contact</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2025 HomeRent. All rights reserved.</p>
+        <div>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- LISTINGS PAGE -->
+  <div id="page-listings" style="display:none">
+    <div class="listings-page">
+      <aside class="filters-panel">
+        <div class="filters-header">
+          <h3>Filters</h3>
+          <button class="clear-filters" onclick="clearFilters()">Clear all</button>
+        </div>
+
+        <div class="filter-section">
+          <label class="filter-label">Location</label>
+          <input type="text" id="filterLocation" placeholder="City or ZIP code" class="filter-input" oninput="applyFilters()" />
+        </div>
+
+        <div class="filter-section">
+          <label class="filter-label">Property type</label>
+          <div class="type-chips" id="typeChips">
+            <span class="chip active" data-type="">All</span>
+            <span class="chip" data-type="apartment">Apartment</span>
+            <span class="chip" data-type="house">House</span>
+            <span class="chip" data-type="studio">Studio</span>
+            <span class="chip" data-type="condo">Condo</span>
+            <span class="chip" data-type="townhouse">Townhouse</span>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <label class="filter-label">Price range (per month)</label>
+          <div class="price-range">
+            <input type="number" id="priceMin" placeholder="Min" class="filter-input half" oninput="applyFilters()" />
+            <span>–</span>
+            <input type="number" id="priceMax" placeholder="Max" class="filter-input half" oninput="applyFilters()" />
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <label class="filter-label">Bedrooms</label>
+          <div class="type-chips" id="bedroomChips">
+            <span class="chip active" data-beds="">Any</span>
+            <span class="chip" data-beds="0">Studio</span>
+            <span class="chip" data-beds="1">1 bed</span>
+            <span class="chip" data-beds="2">2 beds</span>
+            <span class="chip" data-beds="3">3+ beds</span>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <label class="filter-label">Amenities</label>
+          <div class="amenity-checks">
+            <label><input type="checkbox" data-amenity="parking" onchange="applyFilters()"> Parking</label>
+            <label><input type="checkbox" data-amenity="gym" onchange="applyFilters()"> Gym</label>
+            <label><input type="checkbox" data-amenity="pool" onchange="applyFilters()"> Pool</label>
+            <label><input type="checkbox" data-amenity="pet-friendly" onchange="applyFilters()"> Pet friendly</label>
+            <label><input type="checkbox" data-amenity="washer" onchange="applyFilters()"> Washer/Dryer</label>
+            <label><input type="checkbox" data-amenity="dishwasher" onchange="applyFilters()"> Dishwasher</label>
+            <label><input type="checkbox" data-amenity="ac" onchange="applyFilters()"> Air conditioning</label>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <label class="filter-label">Sort by</label>
+          <select class="filter-input" id="sortBy" onchange="applyFilters()">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="newest">Newest first</option>
+          </select>
+        </div>
+      </aside>
+
+      <main class="listings-main">
+        <div class="listings-toolbar">
+          <p id="resultsCount" class="results-count"></p>
+          <div class="view-toggle">
+            <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+            </button>
+            <button class="view-btn" id="listViewBtn" onclick="setView('list')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="listingsGrid" class="listings-grid-page"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- PROPERTY DETAIL PAGE -->
+  <div id="page-detail" style="display:none">
+    <div class="detail-container" id="detailContainer"></div>
+  </div>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal-overlay" id="loginModal" onclick="closeModal(event, 'loginModal')">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal(null, 'loginModal')">✕</button>
+      <h2>Welcome back</h2>
+      <p class="modal-sub">Sign in to your account</p>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" placeholder="Your password" required />
+        </div>
+        <button type="submit" class="btn-primary full-width">Sign in</button>
+      </form>
+      <p class="modal-footer">Don't have an account? <a href="#" onclick="openModal('loginModal')">Sign up</a></p>
+    </div>
+  </div>
+
+  <!-- CONTACT MODAL -->
+  <div class="modal-overlay" id="contactModal" onclick="closeModal(event, 'contactModal')">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal(null, 'contactModal')">✕</button>
+      <h2>Contact Landlord</h2>
+      <p class="modal-sub" id="contactPropertyName"></p>
+      <form onsubmit="handleContact(event)">
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" placeholder="Full name" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Phone (optional)</label>
+          <input type="tel" placeholder="+1 (555) 000-0000" />
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea rows="4" placeholder="Hi, I'm interested in this property..."></textarea>
+        </div>
+        <button type="submit" class="btn-primary full-width">Send Message</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/src/app.js"></script>
+</body>
+</html>
