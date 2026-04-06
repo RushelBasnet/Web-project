@@ -72,12 +72,12 @@
             <label>Max Price</label>
             <select id="heroPrice">
               <option value="">Any price</option>
-              <option value="1000">$1,000/mo</option>
-              <option value="1500">$1,500/mo</option>
-              <option value="2000">$2,000/mo</option>
-              <option value="2500">$2,500/mo</option>
-              <option value="3000">$3,000/mo</option>
-              <option value="4000">$4,000/mo</option>
+              <option value="1000">Rs 1,000/mo</option>
+              <option value="1500">Rs 1,500/mo</option>
+              <option value="2000">Rs 2,000/mo</option>
+              <option value="2500">Rs 2,500/mo</option>
+              <option value="3000">Rs 3,000/mo</option>
+              <option value="4000">Rs 4,000/mo</option>
             </select>
           </div>
           <button class="search-btn" onclick="doSearch()">
@@ -401,6 +401,126 @@
         <div id="messagesContainer"></div>
     </div>
 </div>
+
+  <!-- ADMIN PANEL PAGE -->
+  <div id="page-admin" style="display:none">
+    <div class="admin-container">
+
+      <!-- Admin Header -->
+      <div class="admin-header">
+        <div>
+          <h1>Admin Panel</h1>
+          <p>Manage properties, users, and messages</p>
+        </div>
+      </div>
+
+      <!-- Admin Tabs -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="dashboard" onclick="switchAdminTab('dashboard')">Dashboard</button>
+        <button class="admin-tab" data-tab="properties" onclick="switchAdminTab('properties')">Properties</button>
+        <button class="admin-tab" data-tab="users" onclick="switchAdminTab('users')">Users</button>
+      </div>
+
+      <!-- Dashboard Tab -->
+      <div class="admin-panel" id="admin-dashboard">
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon" style="background:rgba(96,165,250,.15);color:#60a5fa;">🏠</div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-num" id="statTotalProps">0</span>
+              <span class="admin-stat-label">Total Properties</span>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon" style="background:rgba(52,211,153,.15);color:#34d399;">✅</div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-num" id="statActiveProps">0</span>
+              <span class="admin-stat-label">Active Listings</span>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon" style="background:rgba(251,191,36,.15);color:#fbbf24;">📦</div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-num" id="statArchivedProps">0</span>
+              <span class="admin-stat-label">Archived</span>
+            </div>
+          </div>
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon" style="background:rgba(167,139,250,.15);color:#a78bfa;">👥</div>
+            <div class="admin-stat-info">
+              <span class="admin-stat-num" id="statTotalUsers">0</span>
+              <span class="admin-stat-label">Total Users</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-quick-actions">
+          <h3>Quick Actions</h3>
+          <div class="admin-actions-grid">
+            <button class="admin-action-btn" onclick="switchAdminTab('properties')">🏠 Manage Properties</button>
+            <button class="admin-action-btn" onclick="switchAdminTab('users')">👥 Manage Users</button>
+            <button class="admin-action-btn" onclick="adminRefreshAll()">🔄 Refresh Data</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Properties Tab -->
+      <div class="admin-panel" id="admin-properties" style="display:none;">
+        <div class="admin-toolbar">
+          <input type="text" id="adminPropSearch" placeholder="Search properties..." class="admin-search" oninput="filterAdminProperties()" />
+          <select id="adminPropFilter" class="admin-filter-select" onchange="filterAdminProperties()">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+            <option value="pending">Pending</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Location</th>
+                <th>Price</th>
+                <th>Type</th>
+                <th>Owner</th>
+                <th>Status</th>
+                <th>Badge</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminPropertiesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Users Tab -->
+      <div class="admin-panel" id="admin-users" style="display:none;">
+        <div class="admin-toolbar">
+          <input type="text" id="adminUserSearch" placeholder="Search users..." class="admin-search" oninput="filterAdminUsers()" />
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Properties</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminUsersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
   <!-- ABOUT PAGE -->
   <div id="page-about" style="display:none">

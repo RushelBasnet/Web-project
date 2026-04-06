@@ -35,7 +35,7 @@ if($action=='register'){
         echo json_encode([
         "success" => true,
         "message" => "Your Account has been created successfully",
-        "user" => ["id" => $userId, "name" => $name, "email" => $email]
+        "user" => ["id" => $userId, "name" => $name, "email" => $email, "role" => "user"]
     ]);
 }
 //Now for login
@@ -58,7 +58,7 @@ elseif($action==='login'){
     echo json_encode([
         "success" => true,
         "message" => "Logged in successfully",
-        "user" => ["id" => $user['id'], "name" => $user['name'], "email" => $user['email']]
+        "user" => ["id" => $user['id'], "name" => $user['name'], "email" => $user['email'], "role" => $user['role'] ?? 'user']
     ]);
 }
 

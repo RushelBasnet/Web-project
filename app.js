@@ -444,7 +444,7 @@ function propertyCardHTML(p) {
         </button>
       </div>
       <div class="card-body">
-        <div class="card-price">$${p.price.toLocaleString()}<span>/mo</span></div>
+        <div class="card-price">Rs ${p.price.toLocaleString()}<span>/mo</span></div>
         <div class="card-title">${p.title}</div>
         <div class="card-location">📍 ${p.location}</div>
         <div class="card-meta">
@@ -475,7 +475,7 @@ function myListingCardHTML(p) {
                 ${badgeHTML}
             </div>
             <div class="card-body">
-                <div class="card-price">$${p.price.toLocaleString()}<span>/mo</span></div>
+                <div class="card-price">Rs ${p.price.toLocaleString()}<span>/mo</span></div>
                 <div class="card-title">${p.title}</div>
                 <div class="card-location">📍 ${p.location}</div>
                 <div class="card-meta">
@@ -560,7 +560,7 @@ function renderDetail(p) {
         </div>
 
         <div class="detail-price-row">
-          <div class="detail-price">$${p.price.toLocaleString()}</div>
+          <div class="detail-price">Rs ${p.price.toLocaleString()}</div>
           <div class="detail-price-sub">per month</div>
         </div>
 
@@ -632,8 +632,10 @@ function updateNav() {
     const navActions = document.getElementById('navActions');
 
     if (user) {
+        const adminBtn = user.role === 'admin' ? `<button class="btn-primary" onclick="goToAdmin()" style="background:#a78bfa;color:#0f172a;">Admin Panel</button>` : '';
         navActions.innerHTML = `
             <span style="font-size:14px;font-weight:600;color:#111827">Hi, ${user.name}</span>
+            ${adminBtn}
             <button class="btn-outline" onclick="goToMyListings()">My Listings</button>
             <button class="btn-outline" onclick="goToMessages()">Messages</button>
             <button class="btn-outline" onclick="logout()">Log out</button>
@@ -848,13 +850,222 @@ async function loadProperties(){
 }
 }
 
+// ===========================
+// ADMIN PANEL
+// ===========================
+let adminProperties = [];
+let adminUsers = [];
+
+function goToAdmin() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || user.role !== 'admin') {
+        showToast('Admin access required');
+        return;
+    }
+    showPage('admin');
+    adminRefreshAll();
+}
+
+function switchAdminTab(tab) {
+    document.querySelectorAll('.admin-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('admin-' + tab).style.display = 'block';
+    document.querySelector(`.admin-tab[data-tab="${tab}"]`).classList.add('active');
+
+    if (tab === 'dashboard') loadAdminStats();
+    if (tab === 'properties') loadAdminProperties();
+    if (tab === 'users') loadAdminUsers();
+}
+
+async function adminRefreshAll() {
+    await Promise.all([loadAdminStats(), loadAdminProperties(), loadAdminUsers()]);
+    showToast('Data refreshed');
+}
+
+async function adminFetch(action, extraData = {}) {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) return null;
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('user_id', user.id);
+    for (const [key, val] of Object.entries(extraData)) {
+        formData.append(key, val);
+    }
+    const response = await fetch('api/admin.php', { method: 'POST', body: formData });
+    return response.json();
+}
+
+async function loadAdminStats() {
+    const data = await adminFetch('get_stats');
+    if (!data || !data.success) return;
+    document.getElementById('statTotalProps').textContent = data.stats.total_properties;
+    document.getElementById('statActiveProps').textContent = data.stats.active_properties;
+    document.getElementById('statArchivedProps').textContent = data.stats.archived_properties;
+    document.getElementById('statTotalUsers').textContent = data.stats.total_users;
+}
+
+async function loadAdminProperties() {
+    const data = await adminFetch('get_all_properties');
+    if (!data || !data.success) return;
+    adminProperties = data.properties;
+    renderAdminProperties(adminProperties);
+}
+
+function renderAdminProperties(props) {
+    const tbody = document.getElementById('adminPropertiesBody');
+    if (props.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No properties found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = props.map(p => {
+        const statusClass = p.status === 'active' ? 'status-active' : p.status === 'archived' ? 'status-archived' : p.status === 'rejected' ? 'status-rejected' : 'status-pending';
+        return `<tr>
+            <td>${p.id}</td>
+            <td class="admin-td-title">${escapeHTML(p.title)}</td>
+            <td>${escapeHTML(p.city || p.location)}</td>
+            <td>Rs ${Number(p.price).toLocaleString()}</td>
+            <td>${p.type}</td>
+            <td>${escapeHTML(p.owner_name || 'N/A')}<br><small style="color:var(--text-muted)">${escapeHTML(p.owner_email || '')}</small></td>
+            <td><span class="admin-status ${statusClass}">${p.status || 'active'}</span></td>
+            <td>${p.badge === 'featured' ? '<span class="admin-badge-featured">Featured</span>' : '—'}</td>
+            <td class="admin-actions-cell">
+                <select onchange="adminChangePropertyStatus(${p.id}, this.value)" class="admin-action-select">
+                    <option value="" disabled selected>Status</option>
+                    <option value="active">Active</option>
+                    <option value="archived">Archive</option>
+                    <option value="rejected">Reject</option>
+                </select>
+                <button class="admin-btn-sm admin-btn-feature" onclick="adminToggleFeatured(${p.id})" title="${p.badge === 'featured' ? 'Remove featured' : 'Mark featured'}">⭐</button>
+                <button class="admin-btn-sm admin-btn-delete" onclick="adminDeleteProperty(${p.id})" title="Delete permanently">🗑️</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function filterAdminProperties() {
+    const search = document.getElementById('adminPropSearch').value.toLowerCase();
+    const status = document.getElementById('adminPropFilter').value;
+    const filtered = adminProperties.filter(p => {
+        const matchSearch = !search || p.title.toLowerCase().includes(search) || (p.location || '').toLowerCase().includes(search) || (p.city || '').toLowerCase().includes(search);
+        const matchStatus = !status || p.status === status;
+        return matchSearch && matchStatus;
+    });
+    renderAdminProperties(filtered);
+}
+
+async function adminChangePropertyStatus(propId, status) {
+    const data = await adminFetch('update_property_status', { property_id: propId, status: status });
+    if (data && data.success) {
+        showToast(data.message);
+        loadAdminProperties();
+        loadAdminStats();
+    } else {
+        showToast(data?.message || 'Error updating status');
+    }
+}
+
+async function adminToggleFeatured(propId) {
+    const data = await adminFetch('toggle_featured', { property_id: propId });
+    if (data && data.success) {
+        showToast(data.message);
+        loadAdminProperties();
+    } else {
+        showToast('Error toggling featured');
+    }
+}
+
+async function adminDeleteProperty(propId) {
+    if (!confirm('Permanently delete this property? This cannot be undone.')) return;
+    const data = await adminFetch('admin_delete_property', { property_id: propId });
+    if (data && data.success) {
+        showToast(data.message);
+        loadAdminProperties();
+        loadAdminStats();
+    } else {
+        showToast('Error deleting property');
+    }
+}
+
+async function loadAdminUsers() {
+    const data = await adminFetch('get_all_users');
+    if (!data || !data.success) return;
+    adminUsers = data.users;
+    renderAdminUsers(adminUsers);
+}
+
+function renderAdminUsers(users) {
+    const tbody = document.getElementById('adminUsersBody');
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No users found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = users.map(u => {
+        const roleClass = u.role === 'admin' ? 'role-admin' : u.role === 'banned' ? 'role-banned' : 'role-user';
+        const isMe = u.id == currentUser.id;
+        return `<tr>
+            <td>${u.id}</td>
+            <td>${escapeHTML(u.name)} ${isMe ? '<small style="color:var(--primary)">(you)</small>' : ''}</td>
+            <td>${escapeHTML(u.email)}</td>
+            <td><span class="admin-role ${roleClass}">${u.role || 'user'}</span></td>
+            <td>${u.property_count}</td>
+            <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</td>
+            <td class="admin-actions-cell">
+                ${isMe ? '<span style="color:var(--text-muted);font-size:12px;">—</span>' : `
+                    <select onchange="adminChangeUserRole(${u.id}, this.value)" class="admin-action-select">
+                        <option value="" disabled selected>Role</option>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="banned">Ban</option>
+                    </select>
+                    <button class="admin-btn-sm admin-btn-delete" onclick="adminDeleteUser(${u.id})" title="Delete user">🗑️</button>
+                `}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function filterAdminUsers() {
+    const search = document.getElementById('adminUserSearch').value.toLowerCase();
+    const filtered = adminUsers.filter(u => {
+        return !search || u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
+    });
+    renderAdminUsers(filtered);
+}
+
+async function adminChangeUserRole(targetId, role) {
+    const data = await adminFetch('update_user_role', { target_user_id: targetId, role: role });
+    if (data && data.success) {
+        showToast(data.message);
+        loadAdminUsers();
+    } else {
+        showToast(data?.message || 'Error updating role');
+    }
+}
+
+async function adminDeleteUser(targetId) {
+    if (!confirm('Delete this user and ALL their properties? This cannot be undone.')) return;
+    const data = await adminFetch('delete_user', { target_user_id: targetId });
+    if (data && data.success) {
+        showToast(data.message);
+        loadAdminUsers();
+        loadAdminProperties();
+        loadAdminStats();
+    } else {
+        showToast(data?.message || 'Error deleting user');
+    }
+}
+
+
+function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ===========================
+// INIT
+// ===========================
 loadProperties();
 updateNav();
-if (user) {
-    navActions.innerHTML = `
-        <span style="font-size:14px;font-weight:600;color:#111827">Hi, ${user.name}</span>
-        <button class="btn-outline" onclick="goToMyListings()">My Listings</button>
-        <button class="btn-outline" onclick="goToMessages()">Messages</button>
-        <button class="btn-outline" onclick="logout()">Log out</button>
-    `;
-}
