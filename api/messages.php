@@ -28,6 +28,17 @@ elseif($action === 'get_messages') {
     $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode(["success" => true, "messages" => $messages]);
 }
+elseif($action === 'get_my_messages') {
+    $user_id = (int)($_POST['user_id'] ?? 0);
+    if(!$user_id) {
+        echo json_encode(["success" => false, "message" => "User not found"]);
+        exit;
+    }
+    $stmt = $pdo->prepare("SELECT * FROM messages WHERE user_id = ? ORDER BY created_at DESC");
+    $stmt->execute([$user_id]);
+    $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(["success" => true, "messages" => $messages]);
+}
 else {
     echo json_encode(["success" => false, "message" => "Invalid action"]);
 }

@@ -17,12 +17,12 @@
     <div class="nav-container">
       <a href="#" class="logo" onclick="showPage('home')">
         <span class="logo-icon">🏠</span>
-        <span>HomeRent</span>
+        <span>Ghar Sansar</span>
       </a>
       <div class="nav-links">
         <a href="#" onclick="showPage('home')">Browse</a>
-        <a href="#" onclick="showPage('home')">Landlords</a>
-        <a href="#" onclick="showPage('home')">About</a>
+        <a href="#" onclick="goToAddProperty()">List a Property</a>
+        <a href="#" onclick="showPage('about')">About</a>
       </div>
       <div class="nav-actions" id="navActions">
         <button class="btn-outline" onclick="openModal('loginModal')">Log in</button>
@@ -35,7 +35,7 @@
     <div class="mobile-menu" id="mobileMenu">
       <a href="#" onclick="showPage('home'); toggleMobileMenu()">Browse</a>
       <a href="#" onclick="toggleMobileMenu()">Landlords</a>
-      <a href="#" onclick="toggleMobileMenu()">About</a>
+      <a href="#" onclick="showPage('about'); toggleMobileMenu()">About</a>
       <a href="#" onclick="openModal('loginModal'); toggleMobileMenu()">Log in</a>
       <a href="#" onclick="openModal('loginModal'); toggleMobileMenu()">Sign up</a>
     </div>
@@ -193,40 +193,6 @@
       </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer class="footer">
-      <div class="footer-container">
-        <div class="footer-brand">
-          <div class="logo"><span class="logo-icon">🏠</span><span>HomeRent</span></div>
-          <p>Making renting simple, transparent, and stress-free.</p>
-        </div>
-        <div class="footer-links">
-          <h4>Renters</h4>
-          <a href="#">Browse listings</a>
-          <a href="#">How it works</a>
-          <a href="#">Pricing</a>
-        </div>
-        <div class="footer-links">
-          <h4>Landlords</h4>
-          <a href="#">List your property</a>
-          <a href="#">Landlord tools</a>
-          <a href="#">Tenant screening</a>
-        </div>
-        <div class="footer-links">
-          <h4>Company</h4>
-          <a href="#">About us</a>
-          <a href="#">Blog</a>
-          <a href="#">Contact</a>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>© 2026 HomeRent. All rights reserved.</p>
-        <div>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-        </div>
-      </div>
-    </footer>
 
   </div>
 
@@ -321,6 +287,247 @@
   <div id="page-detail" style="display:none">
     <div class="detail-container" id="detailContainer"></div>
   </div>
+  <!-- ADD PROPERTY PAGE -->
+<div id="page-addproperty" style="display:none">
+    <div class="detail-container">
+        <h2 style="margin-bottom:8px">List Your Property</h2>
+        <p style="color:var(--text-muted);margin-bottom:32px">Fill in the details below to list your property</p>
+
+        <form onsubmit="handleAddProperty(event)">
+
+            <div class="form-group">
+                <label>Property Title</label>
+                <input type="text" id="propTitle" placeholder="e.g. Luxury Downtown Apartment" required />
+            </div>
+
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="propLocation" placeholder="e.g. Manhattan, New York" required />
+            </div>
+
+            <div class="form-group">
+                <label>City</label>
+                <input type="text" id="propCity" placeholder="e.g. New York" required />
+            </div>
+
+            <div class="form-group">
+                <label>Price per month (Rs)</label>
+                <input type="number" id="propPrice" placeholder="e.g. 2000" required />
+            </div>
+
+            <div class="form-group">
+                <label>Property Type</label>
+                <select id="propType" required>
+                    <option value="">Select type</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="house">House</option>
+                    <option value="studio">Studio</option>
+                    <option value="condo">Condo</option>
+                    <option value="townhouse">Townhouse</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Bedrooms</label>
+                <select id="propBeds">
+                    <option value="0">Studio</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4+</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Bathrooms</label>
+                <select id="propBaths">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Square Feet</label>
+                <input type="number" id="propSqft" placeholder="e.g. 1200" />
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="propDescription" rows="4" placeholder="Describe your property..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Availability</label>
+                <input type="text" id="propAvailable" placeholder="e.g. Available now" />
+            </div>
+
+            <div class="form-group">
+                <label>Amenities</label>
+                <div class="amenity-checks">
+                    <label><input type="checkbox" value="parking"> Parking</label>
+                    <label><input type="checkbox" value="gym"> Gym</label>
+                    <label><input type="checkbox" value="pool"> Pool</label>
+                    <label><input type="checkbox" value="pet-friendly"> Pet Friendly</label>
+                    <label><input type="checkbox" value="washer"> Washer/Dryer</label>
+                    <label><input type="checkbox" value="dishwasher"> Dishwasher</label>
+                    <label><input type="checkbox" value="ac"> Air Conditioning</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Image URLs (one per line)</label>
+                <textarea id="propImages" rows="3" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary" id="addPropBtn">List Property</button>
+
+        </form>
+    </div>
+</div>
+<!-- MY LISTINGS PAGE -->
+<div id="page-mylistings" style="display:none">
+    <div class="detail-container">
+        <h2 style="margin-bottom:8px">My Listings</h2>
+        <p style="color:var(--text-muted);margin-bottom:32px">Properties you have listed</p>
+        <div class="listings-grid" id="myListingsGrid"></div>
+    </div>
+</div>
+<!-- MY MESSAGES PAGE -->
+<div id="page-messages" style="display:none">
+    <div class="detail-container">
+        <h2 style="margin-bottom:8px">Messages</h2>
+        <p style="color:var(--text-muted);margin-bottom:32px">Messages from potential renters</p>
+        <div id="messagesContainer"></div>
+    </div>
+</div>
+
+  <!-- ABOUT PAGE -->
+  <div id="page-about" style="display:none">
+    <div class="about-page">
+
+      <!-- About Hero -->
+      <section class="about-hero">
+        <div class="about-hero-content">
+          <span class="about-tag">About Us</span>
+          <h1>Making Renting Simple, <br>Transparent, and Trusted</h1>
+          <p>Ghar Sansar is a modern rental marketplace that connects tenants with verified landlords, making the home search process seamless from the very first click to move-in day.</p>
+        </div>
+      </section>
+
+      <!-- Mission -->
+      <section class="about-section">
+        <div class="about-container">
+          <div class="about-grid-2">
+            <div>
+              <span class="about-label">Our Mission</span>
+              <h2>A Better Way to Find Home</h2>
+              <p>We believe everyone deserves a place they can truly call home. Ghar Sansar was founded on a simple idea: renting a home should not be stressful. Whether you are a first-time renter or a seasoned tenant, our platform provides the tools, transparency, and trust you need to find the right space at the right price.</p>
+              <p style="margin-top:16px;">We eliminate the friction of traditional rental searches by bringing verified listings, direct landlord communication, and a streamlined experience all under one roof.</p>
+            </div>
+            <div class="about-stats-card">
+              <div class="about-stat-item">
+                <span class="about-stat-number">12,000+</span>
+                <span class="about-stat-text">Verified Listings</span>
+              </div>
+              <div class="about-stat-item">
+                <span class="about-stat-number">50+</span>
+                <span class="about-stat-text">Cities Nationwide</span>
+              </div>
+              <div class="about-stat-item">
+                <span class="about-stat-number">25,000+</span>
+                <span class="about-stat-text">Happy Tenants</span>
+              </div>
+              <div class="about-stat-item">
+                <span class="about-stat-number">98%</span>
+                <span class="about-stat-text">Satisfaction Rate</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- What We Offer -->
+      <section class="about-section about-section-alt">
+        <div class="about-container">
+          <div class="about-section-header">
+            <span class="about-label">What We Offer</span>
+            <h2>Built for Renters and Landlords Alike</h2>
+            <p>Our platform serves both sides of the rental equation with features designed for efficiency and peace of mind.</p>
+          </div>
+          <div class="about-grid-3">
+            <div class="about-feature-card">
+              <div class="about-feature-icon">🔍</div>
+              <h3>Smart Search</h3>
+              <p>Filter by location, property type, price range, bedrooms, and amenities to find exactly what you need in seconds.</p>
+            </div>
+            <div class="about-feature-card">
+              <div class="about-feature-icon">✅</div>
+              <h3>Verified Listings</h3>
+              <p>Every property on our platform is reviewed to ensure accurate descriptions, genuine photos, and legitimate landlords.</p>
+            </div>
+            <div class="about-feature-card">
+              <div class="about-feature-icon">💬</div>
+              <h3>Direct Communication</h3>
+              <p>Message landlords directly through our platform. No middlemen, no hidden fees — just a straightforward conversation.</p>
+            </div>
+            <div class="about-feature-card">
+              <div class="about-feature-icon">📋</div>
+              <h3>Easy Listing</h3>
+              <p>Landlords can list properties in minutes with our intuitive form, complete with photos, amenities, and pricing details.</p>
+            </div>
+            <div class="about-feature-card">
+              <div class="about-feature-icon">🔒</div>
+              <h3>Secure Accounts</h3>
+              <p>Your personal data stays protected. We use secure authentication so you can browse and transact with confidence.</p>
+            </div>
+            <div class="about-feature-card">
+              <div class="about-feature-icon">📱</div>
+              <h3>Responsive Design</h3>
+              <p>Access Ghar Sansar from any device — desktop, tablet, or mobile — with a fully optimized browsing experience.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Values -->
+      <section class="about-section">
+        <div class="about-container">
+          <div class="about-section-header">
+            <span class="about-label">Our Values</span>
+            <h2>What Drives Us Every Day</h2>
+          </div>
+          <div class="about-grid-3">
+            <div class="about-value-card">
+              <h3>Transparency</h3>
+              <p>No hidden charges, no bait-and-switch listings. What you see is what you get — from pricing to property details.</p>
+            </div>
+            <div class="about-value-card">
+              <h3>Accessibility</h3>
+              <p>We are committed to making quality housing discoverable for everyone, regardless of budget or location preferences.</p>
+            </div>
+            <div class="about-value-card">
+              <h3>Community</h3>
+              <p>We are building more than a platform — we are building a community of responsible tenants and trustworthy landlords.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="about-cta">
+        <div class="about-container" style="text-align:center;">
+          <h2>Ready to Find Your Next Home?</h2>
+          <p>Join thousands of renters and landlords who trust Ghar Sansar to make renting effortless.</p>
+          <div class="about-cta-buttons">
+            <button class="btn-primary" onclick="showPage('listings')" style="padding:14px 32px;font-size:16px;">Browse Properties</button>
+            <button class="btn-outline" onclick="goToAddProperty()" style="padding:14px 32px;font-size:16px;">List Your Property</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
 
   <!-- LOGIN MODAL -->
   <div class="modal-overlay" id="loginModal" onclick="closeModal(event, 'loginModal')">
@@ -339,7 +546,7 @@
         </div>
         <button type="submit" class="btn-primary full-width">Sign in</button>
       </form>
-      <p class="modal-footer">Don't have an account? <a href="#" onclick="openModal('loginModal')">Sign up</a></p>
+      <p class="modal-footer">Don't have an account? <a href="#" onclick="switchModal('loginModal','signupModal')">Sign up</a></p>
     </div>
   </div>
 

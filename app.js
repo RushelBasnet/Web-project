@@ -35,6 +35,246 @@ function showPage(page, data) {
   if (page === 'listings') renderListings();
   if (page === 'detail' && data) renderDetail(data);
 }
+function goToAddProperty() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+        showToast('Please login to list a property');
+        openModal('loginModal');
+        return;
+    }
+    showPage('addproperty');
+}
+function goToMyListings() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+        showToast('Please login first');
+        openModal('loginModal');
+        return;
+    }
+    showPage('mylistings');
+    loadMyListings();
+}
+
+async function loadMyListings() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const formData = new FormData();
+    formData.append('action', 'get_my_listings');
+    formData.append('user_id', user.id);
+
+    const response = await fetch('api/properties.php', {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await response.json();
+    const grid = document.getElementById('myListingsGrid');
+
+    if (data.success && data.properties.length > 0) {
+        data.properties = data.properties.map(p => {
+            if (typeof p.amenities === 'string') {
+                p.amenities = p.amenities.replace('{', '').replace('}', '').split(',');
+            }
+            if (typeof p.images === 'string') {
+                p.images = p.images.replace('{', '').replace('}', '').split(',');
+            }
+            return p;
+        });
+        grid.innerHTML = data.properties.map(p => myListingCardHTML(p)).join('');
+    } else {
+        grid.innerHTML = `
+            <div class="no-results">
+                <div class="no-icon">🏠</div>
+                <h3>No listings yet</h3>
+                <p>You have not listed any properties yet.</p>
+                <button class="btn-primary" onclick="goToAddProperty()" style="margin-top:16px">List a Property</button>
+            </div>`;
+    }
+}
+
+function goToMessages() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+        showToast('Please login first');
+        openModal('loginModal');
+        return;
+    }
+    showPage('messages');
+    loadMessages();
+}
+
+async function loadMessages() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const formData = new FormData();
+    formData.append('action', 'get_my_messages');
+    formData.append('user_id', user.id);
+
+    const response = await fetch('api/messages.php', {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await response.json();
+    const container = document.getElementById('messagesContainer');
+
+    if (data.success && data.messages.length > 0) {
+        container.innerHTML = data.messages.map(m => `
+            <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-weight:700;font-size:15px;">${m.name}</span>
+                    <span style="font-size:12px;color:var(--text-muted);">${new Date(m.created_at).toLocaleDateString()}</span>
+                </div>
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">
+                    📧 ${m.email} ${m.phone ? '· 📞 ' + m.phone : ''}
+                </div>
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">
+                    🏠 ${m.property_name || 'Unknown property'}
+                </div>
+                <p style="font-size:14px;color:var(--text);line-height:1.6;">${m.message}</p>
+            </div>
+        `).join('');
+    } else {
+        container.innerHTML = `
+            <div class="no-results">
+                <div class="no-icon">💬</div>
+                <h3>No messages yet</h3>
+                <p>You have not received any messages yet.</p>
+            </div>`;
+    }
+}
+async function archiveProperty(id) {
+    if (!confirm('Archive this property? It will be hidden from listings.')) return;
+
+    const user = JSON.parse(localStorage.getItem('user'));
+    const formData = new FormData();
+    formData.append('action', 'archive_property');
+    formData.append('id', id);
+    formData.append('user_id', user.id);
+
+    const response = await fetch('api/properties.php', {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await response.json();
+    if (data.success) {
+        showToast('Property archived successfully');
+        loadMyListings();
+    } else {
+        showToast('Something went wrong');
+    }
+}
+
+async function deleteProperty(id) {
+    if (!confirm('Are you sure you want to delete this property? This cannot be undone.')) return;
+
+    const user = JSON.parse(localStorage.getItem('user'));
+    const formData = new FormData();
+    formData.append('action', 'delete_property');
+    formData.append('id', id);
+    formData.append('user_id', user.id);
+
+    const response = await fetch('api/properties.php', {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await response.json();
+    if (data.success) {
+        showToast('Property deleted successfully');
+        loadMyListings();
+    } else {
+        showToast('Something went wrong');
+    }
+}
+
+function editProperty(id) {
+    const p = PROPERTIES.find(x => x.id == id);
+    if (!p) return;
+    showPage('addproperty');
+
+    // Fill form with existing data
+    document.getElementById('propTitle').value = p.title;
+    document.getElementById('propLocation').value = p.location;
+    document.getElementById('propCity').value = p.city;
+    document.getElementById('propPrice').value = p.price;
+    document.getElementById('propType').value = p.type;
+    document.getElementById('propBeds').value = p.beds;
+    document.getElementById('propBaths').value = p.baths;
+    document.getElementById('propSqft').value = p.sqft || '';
+    document.getElementById('propDescription').value = p.description || '';
+    document.getElementById('propAvailable').value = p.available || '';
+    document.getElementById('propImages').value = p.images.join('\n');
+
+    // Check amenities
+    document.querySelectorAll('#page-addproperty input[type="checkbox"]').forEach(cb => {
+        cb.checked = p.amenities.includes(cb.value);
+    });
+
+    // Change button text and store id for update
+    document.getElementById('addPropBtn').textContent = 'Update Property';
+    document.getElementById('addPropBtn').dataset.editId = id;
+}
+
+async function handleAddProperty(e) {
+    e.preventDefault();
+
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+        showToast('Please login to list a property');
+        openModal('loginModal');
+        return;
+    }
+
+    // Get amenities
+    const amenities = Array.from(
+        document.querySelectorAll('#page-addproperty input[type="checkbox"]:checked')
+    ).map(cb => cb.value);
+
+    // Get images
+    const images = document.getElementById('propImages').value
+        .split('\n')
+        .map(url => url.trim())
+        .filter(url => url !== '');
+
+    const formData = new FormData();
+    formData.append('action', 'add_property');
+    formData.append('title', document.getElementById('propTitle').value);
+    formData.append('location', document.getElementById('propLocation').value);
+    formData.append('city', document.getElementById('propCity').value);
+    formData.append('price', document.getElementById('propPrice').value);
+    formData.append('type', document.getElementById('propType').value);
+    formData.append('beds', document.getElementById('propBeds').value);
+    formData.append('baths', document.getElementById('propBaths').value);
+    formData.append('sqft', document.getElementById('propSqft').value);
+    formData.append('description', document.getElementById('propDescription').value);
+    formData.append('available', document.getElementById('propAvailable').value);
+    formData.append('amenities', JSON.stringify(amenities));
+    formData.append('images', JSON.stringify(images));
+    formData.append('landlord', user.name);
+    formData.append('landlord_initial', user.name.charAt(0).toUpperCase());
+    formData.append('user_id', user.id);
+
+    const btn = document.getElementById('addPropBtn');
+    btn.textContent = 'Listing...';
+    btn.disabled = true;
+
+    const response = await fetch('api/properties.php', {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        showToast('Property listed successfully!');
+        showPage('listings');
+        loadProperties();
+    } else {
+        showToast(data.message || 'Something went wrong');
+        btn.textContent = 'List Property';
+        btn.disabled = false;
+    }
+}
 
 // ===========================
 // HERO SEARCH
@@ -224,6 +464,33 @@ function propertyCardHTML(p) {
       </div>
     </div>`;
 }
+function myListingCardHTML(p) {
+    const badgeHTML = p.badge ? `<div class="card-badge ${p.badge}">${p.badge}</div>` : '';
+    const bedsLabel = p.beds === 0 ? 'Studio' : `${p.beds} bed${p.beds > 1 ? 's' : ''}`;
+
+    return `
+        <div class="property-card">
+            <div class="card-image">
+                <img src="${p.images[0]}" alt="${p.title}" loading="lazy" />
+                ${badgeHTML}
+            </div>
+            <div class="card-body">
+                <div class="card-price">$${p.price.toLocaleString()}<span>/mo</span></div>
+                <div class="card-title">${p.title}</div>
+                <div class="card-location">📍 ${p.location}</div>
+                <div class="card-meta">
+                    <div class="card-meta-item">${bedsLabel}</div>
+                    <div class="card-meta-item">${p.baths} bath${p.baths > 1 ? 's' : ''}</div>
+                    <div class="card-meta-item">${p.sqft ? p.sqft.toLocaleString() + ' sq ft' : ''}</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+                    <button class="btn-outline" style="flex:1;padding:8px;" onclick="editProperty(${p.id})">✏️ Edit</button>
+                    <button class="btn-outline" style="flex:1;padding:8px;" onclick="archiveProperty(${p.id})">📦 Archive</button>
+                    <button style="flex:1;padding:8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:var(--radius-sm);cursor:pointer;font-weight:600;font-size:14px;" onclick="deleteProperty(${p.id})">🗑️ Delete</button>
+                </div>
+            </div>
+        </div>`;
+}
 
 // ===========================
 // FAVORITES
@@ -361,12 +628,14 @@ function logout() {
     showToast('Logged out successfully!');
 }
 function updateNav() {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user')); // ← this line must be here
     const navActions = document.getElementById('navActions');
 
     if (user) {
         navActions.innerHTML = `
             <span style="font-size:14px;font-weight:600;color:#111827">Hi, ${user.name}</span>
+            <button class="btn-outline" onclick="goToMyListings()">My Listings</button>
+            <button class="btn-outline" onclick="goToMessages()">Messages</button>
             <button class="btn-outline" onclick="logout()">Log out</button>
         `;
     } else {
@@ -382,8 +651,14 @@ function switchModal(closeId, openId) {
 }
 
 function openContactModal(propertyName) {
-  document.getElementById('contactPropertyName').textContent = propertyName;
-  openModal('contactModal');
+  const user=JSON.parse(localStorage.getItem('user'));
+  if(!user){
+    showToast('Please login to contact landlord');
+    openModal('loginModal');
+    return;
+  }
+    document.getElementById('contactPropertyName').textContent = propertyName;
+    openModal('contactModal');
 }
 
 // ===========================
@@ -405,7 +680,15 @@ async function handleLogin(e) {
 
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
-
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showToast('Please enter a valid email address');
+        return;
+    }
+    if (password.length < 6) {
+        showToast('Password must be at least 6 characters');
+        return;
+    }
     const formData = new FormData();
     formData.append('action', 'login');
     formData.append('email', email);
@@ -439,7 +722,20 @@ async function handleSignup(e) {
     formData.append('name', name);
     formData.append('email', email);
     formData.append('password', password);
-
+  const nameRegex = /^[a-zA-Z\s]{2,50}$/;
+if (!nameRegex.test(name)) {
+    showToast('Name can only contain letters and spaces');
+    return;
+    }
+    const emailRegex = /^[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+if (!emailRegex.test(email)) {
+    showToast('Please enter a valid email address');
+    return;
+}
+    if (password.length < 6) {
+        showToast('Password must be at least 6 characters');
+        return;
+    }
     const response = await fetch('api/auth.php', {
         method: 'POST',
         body: formData
@@ -463,6 +759,8 @@ async function handleContact(e) {
     const phone = document.getElementById('contactPhone').value;
     const message = document.getElementById('contactMessage').value;
     const propertyName = document.getElementById('contactPropertyName').textContent;
+    const user = JSON.parse(localStorage.getItem('user'));
+if(user) formData.append('user_id', user.id);
 const formData = new FormData();
     formData.append('action', 'send_message');
     formData.append('name', name);
@@ -552,3 +850,11 @@ async function loadProperties(){
 
 loadProperties();
 updateNav();
+if (user) {
+    navActions.innerHTML = `
+        <span style="font-size:14px;font-weight:600;color:#111827">Hi, ${user.name}</span>
+        <button class="btn-outline" onclick="goToMyListings()">My Listings</button>
+        <button class="btn-outline" onclick="goToMessages()">Messages</button>
+        <button class="btn-outline" onclick="logout()">Log out</button>
+    `;
+}
