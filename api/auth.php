@@ -50,8 +50,12 @@ elseif($action==='login'){
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);//returns as associative array
 
-    if (!$user || !password_verify($password, $user['password'])) {
-        echo json_encode(["success" => false, "message" => "Invalid email or password"]);
+    if (!$user) {
+        echo json_encode(["success" => false, "message" => "User does not exist"]);
+        exit;
+    }
+    if (!password_verify($password, $user['password'])) {
+        echo json_encode(["success" => false, "message" => "Invalid password"]);
         exit;
     }
 

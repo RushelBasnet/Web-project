@@ -45,6 +45,34 @@ $stmt = $pdo->prepare("INSERT INTO properties(title, location, city, price, type
 $stmt->execute([$title, $location, $city, $price, $type, $beds, $baths, $sqft, $description, $available, $amenities, $images, $landlord, $landlord_initial, $user_id]);
     echo json_encode(["success" => true, "message" => "Property listed successfully"]);
 }
+elseif($action === 'update_property') {
+    $id = (int)($_POST['id'] ?? 0);
+    $title = trim($_POST['title'] ?? '');
+    $location = trim($_POST['location'] ?? '');
+    $city = trim($_POST['city'] ?? '');
+    $price = $_POST['price'] ?? '';
+    $type = $_POST['type'] ?? '';
+    $beds = (int)($_POST['beds'] ?? 0);
+    $baths = (int)($_POST['baths'] ?? 1);
+    $sqft = (int)($_POST['sqft'] ?? 0);
+    $description = trim($_POST['description'] ?? '');
+    $available = trim($_POST['available'] ?? '');
+    $user_id = (int)($_POST['user_id'] ?? 0);
+
+    $amenities_raw = json_decode($_POST['amenities'] ?? '[]');
+    $images_raw = json_decode($_POST['images'] ?? '[]');
+    $amenities = '{' . implode(',', $amenities_raw) . '}';
+    $images = '{' . implode(',', array_map(fn($i) => '"'.$i.'"', $images_raw)) . '}';
+
+    if(!$id || !$title || !$location || !$city || !$price || !$type) {
+        echo json_encode(["success" => false, "message" => "Missing required fields"]);
+        exit;
+    }
+
+    $stmt = $pdo->prepare("UPDATE properties SET title=?, location=?, city=?, price=?, type=?, beds=?, baths=?, sqft=?, description=?, available=?, amenities=?, images=? WHERE id=? AND user_id=?");
+    $stmt->execute([$title, $location, $city, $price, $type, $beds, $baths, $sqft, $description, $available, $amenities, $images, $id, $user_id]);
+    echo json_encode(["success" => true, "message" => "Property updated successfully"]);
+}
 elseif($action === 'get_my_listings') {
     $user_id = (int)($_POST['user_id'] ?? 0);
     if(!$user_id) {

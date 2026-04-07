@@ -91,6 +91,8 @@ async function loadMyListings() {
     }
 }
 
+let _currentChat = null;
+
 function goToMessages() {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) {
@@ -99,46 +101,131 @@ function goToMessages() {
         return;
     }
     showPage('messages');
-    loadMessages();
+    backToInbox();
 }
 
-async function loadMessages() {
+function backToInbox() {
+    _currentChat = null;
+    document.getElementById('chatView').style.display = 'none';
+    document.getElementById('messagesInbox').style.display = 'block';
+    loadConversations();
+}
+
+async function loadConversations() {
     const user = JSON.parse(localStorage.getItem('user'));
     const formData = new FormData();
-    formData.append('action', 'get_my_messages');
+    formData.append('action', 'get_conversations');
     formData.append('user_id', user.id);
 
-    const response = await fetch('api/messages.php', {
-        method: 'POST',
-        body: formData
-    });
-
+    const response = await fetch('api/messages.php', { method: 'POST', body: formData });
     const data = await response.json();
     const container = document.getElementById('messagesContainer');
 
-    if (data.success && data.messages.length > 0) {
-        container.innerHTML = data.messages.map(m => `
-            <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                    <span style="font-weight:700;font-size:15px;">${m.name}</span>
-                    <span style="font-size:12px;color:var(--text-muted);">${new Date(m.created_at).toLocaleDateString()}</span>
+    if (data.success && data.conversations.length > 0) {
+        container.innerHTML = data.conversations.map(c => {
+            const isSender = c.sender_id == user.id;
+            const otherName = c.name;
+            const preview = c.message.length > 80 ? c.message.substring(0, 80) + '...' : c.message;
+            const date = new Date(c.created_at);
+            const timeStr = date.toLocaleDateString();
+            return `
+            <div onclick="openChat(${c.other_id}, ${c.property_id || 'null'}, '${(c.property_name || '').replace(/'/g, "\\'")}')"
+                 style="background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px;cursor:pointer;transition:var(--transition);"
+                 onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--glass-border)'">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="width:36px;height:36px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;">
+                            ${otherName.charAt(0).toUpperCase()}
+                        </div>
+                        <span style="font-weight:700;font-size:15px;color:var(--text);">${otherName}</span>
+                    </div>
+                    <span style="font-size:12px;color:var(--text-light);">${timeStr}</span>
                 </div>
-                <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">
-                    📧 ${m.email} ${m.phone ? '· 📞 ' + m.phone : ''}
+                <div style="font-size:13px;color:var(--primary);margin-bottom:4px;margin-left:46px;">
+                    🏠 ${c.property_name || 'General'}
                 </div>
-                <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">
-                    🏠 ${m.property_name || 'Unknown property'}
-                </div>
-                <p style="font-size:14px;color:var(--text);line-height:1.6;">${m.message}</p>
-            </div>
-        `).join('');
+                <p style="font-size:13px;color:var(--text-muted);margin-left:46px;line-height:1.4;">${isSender ? 'You: ' : ''}${preview}</p>
+            </div>`;
+        }).join('');
     } else {
         container.innerHTML = `
             <div class="no-results">
                 <div class="no-icon">💬</div>
                 <h3>No messages yet</h3>
-                <p>You have not received any messages yet.</p>
+                <p>Start a conversation by contacting a landlord.</p>
             </div>`;
+    }
+}
+
+async function openChat(otherId, propertyId, propertyName) {
+    const user = JSON.parse(localStorage.getItem('user'));
+    _currentChat = { otherId, propertyId, propertyName };
+
+    document.getElementById('messagesInbox').style.display = 'none';
+    document.getElementById('chatView').style.display = 'block';
+    document.getElementById('chatTitle').textContent = propertyName || 'Conversation';
+    document.getElementById('chatSubtitle').textContent = 'Loading...';
+
+    const formData = new FormData();
+    formData.append('action', 'get_thread');
+    formData.append('user_id', user.id);
+    formData.append('other_id', otherId);
+    if (propertyId) formData.append('property_id', propertyId);
+
+    const response = await fetch('api/messages.php', { method: 'POST', body: formData });
+    const data = await response.json();
+    const chatBox = document.getElementById('chatMessages');
+
+    if (data.success && data.messages.length > 0) {
+        const otherName = data.messages.find(m => m.sender_id != user.id)?.name || 'User';
+        document.getElementById('chatSubtitle').textContent = 'Chat with ' + otherName;
+
+        chatBox.innerHTML = data.messages.map(m => {
+            const isMe = m.sender_id == user.id;
+            return `
+            <div style="display:flex;flex-direction:column;align-items:${isMe ? 'flex-end' : 'flex-start'};">
+                <div style="max-width:70%;padding:10px 16px;border-radius:${isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};background:${isMe ? 'var(--primary-dark)' : 'var(--glass)'};border:1px solid ${isMe ? 'transparent' : 'var(--glass-border)'};color:var(--text);font-size:14px;line-height:1.5;">
+                    ${m.message}
+                </div>
+                <span style="font-size:11px;color:var(--text-light);margin-top:4px;padding:0 4px;">
+                    ${m.name} · ${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </span>
+            </div>`;
+        }).join('');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    } else {
+        chatBox.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">No messages yet.</p>';
+        document.getElementById('chatSubtitle').textContent = '';
+    }
+}
+
+async function sendReply(e) {
+    e.preventDefault();
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || !_currentChat) return;
+
+    const input = document.getElementById('chatReplyInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    const formData = new FormData();
+    formData.append('action', 'send_reply');
+    formData.append('sender_id', user.id);
+    formData.append('receiver_id', _currentChat.otherId);
+    if (_currentChat.propertyId) formData.append('property_id', _currentChat.propertyId);
+    formData.append('property_name', _currentChat.propertyName || '');
+    formData.append('name', user.name || user.email);
+    formData.append('email', user.email);
+    formData.append('message', message);
+
+    const response = await fetch('api/messages.php', { method: 'POST', body: formData });
+    const data = await response.json();
+
+    if (data.success) {
+        input.value = '';
+        openChat(_currentChat.otherId, _currentChat.propertyId, _currentChat.propertyName);
+    } else {
+        showToast(data.message || 'Failed to send reply');
     }
 }
 async function archiveProperty(id) {
@@ -236,8 +323,12 @@ async function handleAddProperty(e) {
         .map(url => url.trim())
         .filter(url => url !== '');
 
+    const btn = document.getElementById('addPropBtn');
+    const editId = btn.dataset.editId;
+
     const formData = new FormData();
-    formData.append('action', 'add_property');
+    formData.append('action', editId ? 'update_property' : 'add_property');
+    if (editId) formData.append('id', editId);
     formData.append('title', document.getElementById('propTitle').value);
     formData.append('location', document.getElementById('propLocation').value);
     formData.append('city', document.getElementById('propCity').value);
@@ -254,8 +345,7 @@ async function handleAddProperty(e) {
     formData.append('landlord_initial', user.name.charAt(0).toUpperCase());
     formData.append('user_id', user.id);
 
-    const btn = document.getElementById('addPropBtn');
-    btn.textContent = 'Listing...';
+    btn.textContent = editId ? 'Updating...' : 'Listing...';
     btn.disabled = true;
 
     const response = await fetch('api/properties.php', {
@@ -266,12 +356,15 @@ async function handleAddProperty(e) {
     const data = await response.json();
 
     if (data.success) {
-        showToast('Property listed successfully!');
+        showToast(editId ? 'Property updated successfully!' : 'Property listed successfully!');
+        delete btn.dataset.editId;
+        btn.textContent = 'List Property';
+        btn.disabled = false;
         showPage('listings');
         loadProperties();
     } else {
         showToast(data.message || 'Something went wrong');
-        btn.textContent = 'List Property';
+        btn.textContent = editId ? 'Update Property' : 'List Property';
         btn.disabled = false;
     }
 }
@@ -610,11 +703,11 @@ function renderDetail(p) {
               <div class="landlord-tag">Verified Landlord</div>
             </div>
           </div>
-          <button class="btn-primary" onclick="openContactModal('${p.title.replace(/'/g, "\\'")}')">
+          <button class="btn-primary" onclick="openContactModal('${p.title.replace(/'/g, "\\'")}', ${p.id}, ${p.user_id})">
             📧 Contact Landlord
           </button>
           <br/>
-          <button class="btn-outline" onclick="openContactModal('${p.title.replace(/'/g, "\\'")}')">
+          <button class="btn-outline" onclick="openContactModal('${p.title.replace(/'/g, "\\'")}', ${p.id}, ${p.user_id})">
             📅 Schedule Viewing
           </button>
           <p class="card-note">Usually responds within 2 hours</p>
@@ -652,13 +745,18 @@ function switchModal(closeId, openId) {
     openModal(openId);
 }
 
-function openContactModal(propertyName) {
+let _contactPropertyId = null;
+let _contactReceiverId = null;
+
+function openContactModal(propertyName, propertyId, receiverId) {
   const user=JSON.parse(localStorage.getItem('user'));
   if(!user){
     showToast('Please login to contact landlord');
     openModal('loginModal');
     return;
   }
+    _contactPropertyId = propertyId || null;
+    _contactReceiverId = receiverId || null;
     document.getElementById('contactPropertyName').textContent = propertyName;
     openModal('contactModal');
 }
@@ -762,9 +860,11 @@ async function handleContact(e) {
     const message = document.getElementById('contactMessage').value;
     const propertyName = document.getElementById('contactPropertyName').textContent;
     const user = JSON.parse(localStorage.getItem('user'));
-if(user) formData.append('user_id', user.id);
-const formData = new FormData();
+    const formData = new FormData();
     formData.append('action', 'send_message');
+    if(user) formData.append('sender_id', user.id);
+    if(_contactReceiverId) formData.append('receiver_id', _contactReceiverId);
+    if(_contactPropertyId) formData.append('property_id', _contactPropertyId);
     formData.append('name', name);
     formData.append('email', email);
     formData.append('phone', phone);
